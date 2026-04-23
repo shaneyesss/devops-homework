@@ -412,11 +412,47 @@ def calculate_heart_score(history, ecg, age_score, risk_factors, troponin):
       5. Return a dict containing ``'score'``, ``'risk_level'``, and
          ``'interpretation'``.
     """
-    # TODO: Students — implement this function
-    raise NotImplementedError(
-        "calculate_heart_score() is not yet implemented. "
-        "Please implement this function according to the docstring."
-    )
+    components = {
+        "history": history,
+        "ecg": ecg,
+        "age_score": age_score,
+        "risk_factors": risk_factors,
+        "troponin": troponin,
+    }
+
+    for name, value in components.items():
+        if not isinstance(value, int) or value not in (0, 1, 2):
+            raise ValueError(
+                f"Invalid value for {name}: {value}. "
+                "Each HEART component must be an integer 0, 1, or 2."
+            )
+
+    score = sum(components.values())
+
+    if score <= 3:
+        risk_level = "low"
+        interpretation = (
+            "Low risk HEART score (0-3): approximately 1.7% risk of MACE. "
+            "Consider early discharge with appropriate follow-up."
+        )
+    elif score <= 6:
+        risk_level = "moderate"
+        interpretation = (
+            "Moderate risk HEART score (4-6): approximately 12% risk of MACE. "
+            "Recommend observation and serial troponin testing."
+        )
+    else:
+        risk_level = "high"
+        interpretation = (
+            "High risk HEART score (7-10): approximately 65% risk of MACE. "
+            "Recommend early invasive strategy and urgent cardiology evaluation."
+        )
+
+    return {
+        "score": score,
+        "risk_level": risk_level,
+        "interpretation": interpretation,
+    }
 
 
 # =============================================================================
@@ -556,8 +592,62 @@ def calculate_pecarn(age_months, gcs, altered_mental_status,
                            preference'
            low          → 'CT scan NOT recommended'
     """
-    # TODO: Students — implement this function
-    raise NotImplementedError(
-        "calculate_pecarn() is not yet implemented. "
-        "Please implement this function according to the docstring."
-    )
+    if not 3 <= gcs <= 15:
+        raise ValueError("GCS must be between 3 and 15 (inclusive).")
+
+    if age_months < 24:
+        high_risk = (
+            gcs < 15
+            or bool(palpable_skull_fracture)
+            or bool(altered_mental_status)
+        )
+        intermediate_risk = (
+            bool(loss_of_consciousness)
+            or scalp_hematoma_location == "non-frontal"
+            or bool(severe_mechanism)
+            or bool(vomiting)
+        )
+    else:
+        high_risk = (
+            gcs < 15
+            or bool(signs_basal_skull_fracture)
+            or bool(altered_mental_status)
+        )
+        intermediate_risk = (
+            bool(loss_of_consciousness)
+            or bool(vomiting)
+            or bool(severe_mechanism)
+            or bool(severe_headache)
+        )
+
+    if high_risk:
+        risk_level = "high"
+        recommendation = "CT scan recommended"
+        interpretation = (
+            "High PECARN risk: at least one high-risk feature is present. "
+            "CT scan is recommended to evaluate for clinically important traumatic brain injury."
+        )
+    elif intermediate_risk:
+        risk_level = "intermediate"
+        recommendation = (
+            "CT scan versus observation: individualise based on physician experience, "
+            "multiple vs isolated findings, worsening symptoms, age < 3 months, "
+            "parental preference"
+        )
+        interpretation = (
+            "Intermediate PECARN risk: no high-risk features are present, but one or more "
+            "intermediate-risk features are present. Management should be individualised."
+        )
+    else:
+        risk_level = "low"
+        recommendation = "CT scan NOT recommended"
+        interpretation = (
+            "Low PECARN risk: no high-risk or intermediate-risk features are present. "
+            "Risk of clinically important traumatic brain injury is very low."
+        )
+
+    return {
+        "risk_level": risk_level,
+        "recommendation": recommendation,
+        "interpretation": interpretation,
+    }
